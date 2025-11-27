@@ -1,0 +1,9 @@
+{
+  "name": "APP Inglês",
+  "short_name": "APP Inglês",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": []
+}

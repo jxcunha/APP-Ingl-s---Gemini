@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APP Inglês</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: light dark;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      background: radial-gradient(circle at top, #e0f2fe, #e5e7eb);
+      color: #111827;
+    }
+    .app {
+      width: 100%;
+      max-width: 480px;
+      padding: 16px;
+    }
+    header {
+      display: flex;
+      justify-content: center; /* CENTRALIZA O TÍTULO */
+      margin-bottom: 16px;
+      text-align: center; /* Centraliza o texto dentro */
+      width: 100%;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+    .card {
+      background: #ffffffcc;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+      backdrop-filter: blur(6px);
+      margin-bottom: 12px;
+    }
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #22c55e, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f9fafb;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .chat-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    #chat-messages {
+      border-radius: 12px;
+      background: #f9fafb;
+      padding: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+    .chat-msg {
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .chat-msg.me {
+      text-align: right;
+      font-weight: 500;
+    }
+    .chat-msg.bot strong {
+      color: #2563eb;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+    #chat-input {
+      flex: 1;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      outline: none;
+      background: #e5e7eb;
+    }
+    #chat-send {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #2563eb;
+      color: #f9fafb;
+      cursor: pointer;
+    }
+    .voice-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    .pill-btn {
+      flex: 1;
+      min-width: 130px;
+      border-radius: 999px;
+      border: none;
+      padding: 8px 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    #btn-listen-last {
+      background: #22c55e;
+      color: #0f172a;
+      box-shadow: 0 6px 14px rgba(34, 197, 94, 0.4);
+    }
+    #btn-speak-voice {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    #chat-status {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      min-height: 18px;
+    }
+    footer {
+      margin-top: 8px;
+      font-size: 0.7rem;
+      text-align: center;
+      opacity: 0.7;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: radial-gradient(circle at top, #0f172a, #020617);
+        color: #e5e7eb;
+      }
+      .card {
+        background: #020617e6;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      }
+      #chat-messages {
+        background: #020617;
+      }
+      #chat-input {
+        background: #111827;
+        color: #e5e7eb;
+      }
+      #btn-speak-voice {
+        background: #111827;
+        color: #e5e7eb;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- HEADER CENTRALIZADO E SEM O SUBTÍTULO -->
+    <header>
+      <h1>APP Inglês</h1>
+    </header>
+
+    <section class="card">
+      <div class="chat-header">
+        <div class="chat-avatar">AI</div>
+        <div>
+          <div class="chat-title">Professora interativa</div>
+        </div>
+      </div>
+
+      <div id="chat-messages">
+        <div class="chat-msg bot">
+          <strong>Profa:</strong> Oi, Ju! Eu sou sua professora de inglês.
+          Você pode falar comigo em português ou inglês que eu te ajudo. 🙂
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <input
+          id="chat-input"
+          type="text"
+          placeholder="Digite em PT ou EN e clique em Enviar..."
+          autocomplete="off"
+        />
+        <button id="chat-send" type="button">Enviar</button>
+      </div>
+
+      <div class="voice-row">
+        <button id="btn-listen-last" class="pill-btn" type="button">
+          ▶ Ouvir última resposta
+        </button>
+        <button id="btn-speak-voice" class="pill-btn" type="button">
+          🎤 Falar com a professora
+        </button>
+      </div>
+
+      <div id="chat-status"></div>
+    </section>
+
+    <footer>
+      Dica: use fones de ouvido e fale devagar quando usar o microfone.
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function (err) {
+        console.warn("Service worker não registrado:", err);
+      });
+    }
+  </script>
+</body>
+</html>
+
