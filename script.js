@@ -9,9 +9,9 @@ const listenLastBtn = document.getElementById("btn-listen-last");
 const speakVoiceBtn = document.getElementById("btn-speak-voice");
 
 let lastBotReply =
-  "Oi, Ju! Eu sou sua professora de inglês. Você pode falar comigo em português ou inglês que eu te ajudo.";
+  "Oi, eu sou sua professora de inglês. Você pode falar comigo em português ou inglês que eu te ajudo.";
 
-// ----- Utilitário para mostrar mensagens no chat -----
+// ----- Utilitário: mostra mensagens no chat -----
 function appendMessage(text, who) {
   const div = document.createElement("div");
   div.classList.add("chat-msg");
@@ -26,7 +26,7 @@ function appendMessage(text, who) {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
-// ----- Enviar mensagem para a API de chat (Gemini) -----
+// ----- Enviar mensagem para /api/chat (Gemini) -----
 async function sendMessage(rawText) {
   const text = (rawText || "").trim();
   if (!text) return;
@@ -55,7 +55,7 @@ async function sendMessage(rawText) {
     appendMessage(reply, "bot");
     statusEl.textContent = "";
 
-    // 🔊 Fala automaticamente assim que a resposta chega
+    // 🔊 FALA AUTOMATICAMENTE ASSIM QUE CHEGA A RESPOSTA
     speakText(reply);
   } catch (err) {
     console.error(err);
@@ -75,7 +75,7 @@ chatInputEl.addEventListener("keydown", (ev) => {
   }
 });
 
-// ----- Leitura em voz alta usando Gemini TTS -----
+// ----- Leitura em voz alta usando /api/voice (Gemini TTS) -----
 async function speakText(text) {
   const cleanText = (text || "").trim();
   if (!cleanText) return;
@@ -105,12 +105,11 @@ async function speakText(text) {
     await audio.play();
   } catch (err) {
     console.error("Erro Gemini TTS:", err);
-    statusEl.textContent =
-      "Não consegui gerar a voz agora.";
+    statusEl.textContent = "Não consegui gerar a voz agora.";
   }
 }
 
-// Botão "Ouvir última resposta" (vira REPLAY)
+// Botão "Ouvir última resposta" = replay
 listenLastBtn.addEventListener("click", () => {
   if (!lastBotReply) {
     statusEl.textContent = "Ainda não tenho nenhuma resposta para ler.";
