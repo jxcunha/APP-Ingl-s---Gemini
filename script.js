@@ -1,4 +1,4 @@
-// APP Inglês – Professora interativa com ChatGPT + voz
+// APP Inglês – Professora interativa com Gemini (chat + voz)
 
 const chatMessagesEl = document.getElementById("chat-messages");
 const chatInputEl = document.getElementById("chat-input");
@@ -26,7 +26,7 @@ function appendMessage(text, who) {
   chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
 }
 
-// ----- Enviar mensagem para a API de chat -----
+// ----- Enviar mensagem para a API de chat (Gemini) -----
 async function sendMessage(rawText) {
   const text = (rawText || "").trim();
   if (!text) return;
@@ -54,6 +54,9 @@ async function sendMessage(rawText) {
     lastBotReply = reply;
     appendMessage(reply, "bot");
     statusEl.textContent = "";
+
+    // 🔊 Fala automaticamente assim que a resposta chega
+    speakText(reply);
   } catch (err) {
     console.error(err);
     statusEl.textContent =
@@ -72,7 +75,7 @@ chatInputEl.addEventListener("keydown", (ev) => {
   }
 });
 
-// ----- Leitura em voz alta usando a voz neural da OpenAI -----
+// ----- Leitura em voz alta usando Gemini TTS -----
 async function speakText(text) {
   const cleanText = (text || "").trim();
   if (!cleanText) return;
@@ -87,7 +90,7 @@ async function speakText(text) {
     });
 
     if (!res.ok) {
-      throw new Error("Erro HTTP TTS " + res.status);
+      throw new Error("Erro TTS " + res.status);
     }
 
     const blob = await res.blob();
@@ -101,24 +104,13 @@ async function speakText(text) {
 
     await audio.play();
   } catch (err) {
-    console.error("Erro no TTS da OpenAI, usando fallback do navegador:", err);
+    console.error("Erro Gemini TTS:", err);
     statusEl.textContent =
-      "Não consegui usar a voz natural agora. Vou usar a voz do navegador.";
-
-    // Fallback: Web Speech API (voz do navegador)
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 0.95;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    } else {
-      statusEl.textContent =
-        "Seu navegador não suporta leitura em voz alta.";
-    }
+      "Não consegui gerar a voz agora.";
   }
 }
 
-// Botão "Ouvir última resposta"
+// Botão "Ouvir última resposta" (vira REPLAY)
 listenLastBtn.addEventListener("click", () => {
   if (!lastBotReply) {
     statusEl.textContent = "Ainda não tenho nenhuma resposta para ler.";
@@ -173,5 +165,3 @@ speakVoiceBtn.addEventListener("click", () => {
   statusEl.textContent = "";
   recognition.start();
 });
-
-
