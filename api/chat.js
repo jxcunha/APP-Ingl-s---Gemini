@@ -1,4 +1,4 @@
-// api/chat.js — Gemini com respostas curtas e controle de idioma/tradução/correção
+// api/chat.js — Gemini com controle de idioma, tradução e correção
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -23,7 +23,42 @@ export default async function handler(req, res) {
     const lower = message.toLowerCase();
 
     // -------------------------------------------------
-    // 1) VER SE O USUÁRIO PEDIU EXPLICITAMENTE UM IDIOMA
+    // 0) CLASSIFICAR O TIPO DE PEDIDO
+    // -------------------------------------------------
+    // Quer tradução para inglês? (ex: "como se diz ... em inglês", "traduza para o inglês")
+    const wantsToEnglishTranslation =
+      (lower.includes("como se diz") && lower.includes("em ingles")) ||
+      (lower.includes("como se fala") && lower.includes("em ingles")) ||
+      lower.includes("traduza para o inglês") ||
+      lower.includes("traduza para ingles") ||
+      lower.includes("tradução para o inglês") ||
+      lower.includes("traduza isso para o inglês") ||
+      lower.includes("translate to english") ||
+      lower.includes("translate this sentence to english");
+
+    // Quer tradução para português? (ex: "translate to Portuguese")
+    const wantsToPortugueseTranslation =
+      lower.includes("traduza para o português") ||
+      lower.includes("traduza para portugues") ||
+      lower.includes("traduza a sentença para o português") ||
+      lower.includes("traduza a frase para o português") ||
+      lower.includes("translate this sentence to portuguese") ||
+      lower.includes("translate to portuguese") ||
+      lower.includes("how do you say in portuguese");
+
+    // -------------------------------------------------
+    // 1) SE TIVER PEDIDO CLARO DE TRADUÇÃO, ENTRA EM MODO ESPECIAL
+    // -------------------------------------------------
+    let mode = "normal"; // "normal" | "toEnglish" | "toPortuguese"
+
+    if (wantsToEnglishTranslation) {
+      mode = "toEnglish";
+    } else if (wantsToPortugueseTranslation) {
+      mode = "toPortuguese";
+    }
+
+    // -------------------------------------------------
+    // 2) LÓGICA DE IDIOMA PARA O MODO "NORMAL"
     // -------------------------------------------------
     let forcedLanguage = null; // "english" ou "portuguese"
 
@@ -32,12 +67,6 @@ export default async function handler(req, res) {
       lower.includes("responder em inglês") ||
       lower.includes("resposta em inglês") ||
       lower.includes("em ingles") ||
-      lower.includes("para o inglês") ||
-      lower.includes("para ingles") ||
-      lower.includes("traduza para o inglês") ||
-      lower.includes("traduza para ingles") ||
-      (lower.includes("como se fala") && lower.includes("em inglês")) ||
-      lower.includes("translate to english") ||
       lower.includes("answer in english") ||
       lower.includes("reply in english");
 
@@ -45,14 +74,8 @@ export default async function handler(req, res) {
       lower.includes("responda em português") ||
       lower.includes("responder em português") ||
       lower.includes("resposta em português") ||
-      lower.includes("para o português") ||
-      lower.includes("para portugues") ||
-      lower.includes("traduza para o português") ||
-      lower.includes("traduza a sentença para o português") ||
-      lower.includes("traduza a frase para o português") ||
-      lower.includes("translate this sentence to portuguese") ||
-      lower.includes("translate to portuguese") ||
-      lower.includes("how do you say in portuguese");
+      lower.includes("resposta em portugues") ||
+      lower.includes("answer in portuguese");
 
     if (asksEnglish) {
       forcedLanguage = "english";
@@ -60,47 +83,64 @@ export default async function handler(req, res) {
       forcedLanguage = "portuguese";
     }
 
-    // -------------------------------------------------
-    // 2) HEURÍSTICA: A FRASE PARECE MAIS EN OU PT?
-    // -------------------------------------------------
+    // Heurística: parece mais inglês ou português?
     const looksEnglish =
       /[a-zA-Z]/.test(message) && !/[áéíóúàãõâêôç]/i.test(message);
 
-    let targetLanguage;
+    let targetLanguage = "portuguese"; // default
 
-    if (forcedLanguage) {
-      // se o usuário pediu um idioma, obedecemos
-      targetLanguage = forcedLanguage;
-    } else {
-      // regra padrão
-      targetLanguage = looksEnglish ? "english" : "portuguese";
+    if (mode === "normal") {
+      if (forcedLanguage) {
+        targetLanguage = forcedLanguage;
+      } else {
+        targetLanguage = looksEnglish ? "english" : "portuguese";
+      }
+    } else if (mode === "toEnglish") {
+      // caso especial: tradução para inglês -> resposta em PT explicando + exemplos em EN
+      targetLanguage = "portuguese";
+    } else if (mode === "toPortuguese") {
+      // tradução para português -> resposta em PT
+      targetLanguage = "portuguese";
     }
 
     // -------------------------------------------------
-    // 3) PROMPT DE SISTEMA CONFORME O IDIOMA ALVO
+    // 3) MONTAR O PROMPT DE SISTEMA
     // -------------------------------------------------
-    let systemPrompt;
+    let systemPrompt = "";
 
-    if (targetLanguage === "english") {
-      // Regra padrão EN:
-      // - frase em inglês -> responde em inglês
-      // - PT pedindo tradução p/ inglês -> responde em inglês
-      // EXTRA: se houver erro de inglês, explicar em PT e dar exemplos em EN
-      systemPrompt =
-        "You are an English teacher. " +
-        "Default rule: answer ONLY in English, using simple vocabulary and at most two sentences. " +
-        "HOWEVER, when the student writes an English sentence that is incorrect, or asks if a sentence is correct, " +
-        "you must explain the correction in Brazilian Portuguese, and always show the corrected examples in English. " +
-        "If the student explicitly asks for a translation to Portuguese, then answer in Portuguese only.";
-    } else {
-      // Regra padrão PT:
-      // - pedido de tradução p/ PT -> responde em PT
-      // - frase normal em PT -> responde em PT
+    if (mode === "toEnglish") {
+      // 💙 CASO ESPECIAL QUE VOCÊ QUER:
+      // pergunta tipo "como se diz 'eu vou viajar' em inglês"
+      // → resposta em PORTUGUÊS com exemplos em INGLÊS
       systemPrompt =
         "Você é professora de inglês. " +
-        "Regra padrão: responda SOMENTE em português, com linguagem simples e no máximo duas frases. " +
-        "Quando o estudante pedir para responder em inglês ou traduzir para o inglês, então responda em inglês, " +
-        "também em no máximo duas frases.";
+        "O estudante está perguntando como dizer algo em inglês. " +
+        "Responda SEMPRE em português, de forma simples, em no máximo duas frases, " +
+        "mas inclua uma ou mais opções CORRETAS em inglês entre aspas. " +
+        "Exemplo de estilo: 'Você pode falar \"I am going to travel.\" Ou também \"I will travel.\"'.";
+    } else if (mode === "toPortuguese") {
+      // tradução para português
+      systemPrompt =
+        "Você é professora de inglês. " +
+        "O estudante quer uma tradução para o português. " +
+        "Explique de forma simples em português, em no máximo duas frases, " +
+        "podendo citar a frase original em inglês se for útil.";
+    } else {
+      // modo normal (sem pedido claro de tradução)
+      if (targetLanguage === "english") {
+        systemPrompt =
+          "You are an English teacher. " +
+          "Default rule: answer ONLY in English, using simple vocabulary and at most two sentences. " +
+          "When the student writes an incorrect English sentence or asks if a sentence is correct, " +
+          "you must explain the correction in Brazilian Portuguese and show the corrected examples in English. " +
+          "If the student explicitly asks for a translation to Portuguese, then answer in Portuguese only.";
+      } else {
+        systemPrompt =
+          "Você é professora de inglês. " +
+          "Regra padrão: responda SOMENTE em português, com linguagem simples e no máximo duas frases. " +
+          "Quando o estudante pedir explicitamente para responder em inglês ou para traduzir algo para o inglês, " +
+          "então responda em inglês, também em no máximo duas frases.";
+      }
     }
 
     // -------------------------------------------------
@@ -149,4 +189,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Internal server error" });
   }
 }
-
