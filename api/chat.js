@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Only POST allowed" });
   }
 
-  // 👉 Agora usamos GEMINI_API_KEY (não mais OPENAI_API_KEY)
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.error("Faltando GEMINI_API_KEY nas variáveis de ambiente");
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Vercel às vezes manda o body como string
     const body =
       typeof req.body === "string" ? JSON.parse(req.body) : req.body || {};
     const { message } = body;
@@ -39,10 +37,12 @@ export default async function handler(req, res) {
               parts: [
                 {
                   text:
-                    "Você é uma professora de inglês da Ju. " +
-                    "Responda curto, claro e de forma educativa.\n\n" +
+                    "Você é a professora de inglês da Ju. " +
+                    "Responda SEMPRE em no máximo **duas frases**, " +
+                    "com explicação objetiva, clara e fácil de entender. " +
+                    "Fale como uma professora paciente, mas rápida.\n\n" +
                     "Pergunta da Ju: " +
-                    message,
+                    message
                 },
               ],
             },
@@ -59,7 +59,6 @@ export default async function handler(req, res) {
 
     const data = await geminiRes.json();
 
-    // 👉 Pega o texto da resposta no formato do Gemini
     const reply =
       data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
       "Desculpa, não consegui responder agora. Tente de novo.";
